@@ -1,4 +1,4 @@
 pycryptodome
 base58
-bip32-utils
+bip32utils
 mnemonic
