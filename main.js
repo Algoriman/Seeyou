@@ -4,7 +4,7 @@ const generateDogecoinAddress = require('./generateDogecoinAddress');
 const generateCasePermutations = require('./casePermutations');
 
 // Target string you want to match against the Dogecoin address
-const targetString = "tun";  // Replace with your desired target string
+const targetString = "turjaun";  // Replace with your desired target string
 
 // Generate all case permutations of the target string
 const targetPermutations = generateCasePermutations(targetString);
