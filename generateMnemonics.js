@@ -1,27 +1,45 @@
-// generateMnemonics.js
 const bip39 = require('bip39');
 
-// Define the mnemonic generation function
-function generateMnemonic() {
-    // Define the desired mnemonic strengths in bits and their respective word counts
-    const strengths = [
-        { bits: 128, words: 12 },
-        { bits: 160, words: 15 },
-        { bits: 192, words: 18 },
-        { bits: 224, words: 21 },
-        { bits: 256, words: 24 }
-    ];
+// Define supported languages with corresponding wordlists
+const languages = {
+    english: bip39.wordlists.english,
+    chinese_simplified: bip39.wordlists.chinese_simplified,
+    chinese_traditional: bip39.wordlists.chinese_traditional,
+    japanese: bip39.wordlists.japanese,
+    french: bip39.wordlists.french,
+    italian: bip39.wordlists.italian,
+    korean: bip39.wordlists.korean,
+    spanish: bip39.wordlists.spanish,
+    portuguese: bip39.wordlists.portuguese,
+    czech: bip39.wordlists.czech,
+};
 
-    // Select a random strength
-    const randomStrengthIndex = Math.floor(Math.random() * strengths.length);
-    const { bits, words } = strengths[randomStrengthIndex];
+/**
+ * Generate a mnemonic phrase.
+ *
+ * @param {string} language - The language for the mnemonic.
+ * @param {number} words - The number of words (12, 15, 18, 21, 24).
+ * @returns {string} The generated mnemonic.
+ */
+function generateMnemonic(language = 'english', words = 12) {
+    const validWordCounts = {
+        12: 128,
+        15: 160,
+        18: 192,
+        21: 224,
+        24: 256,
+    };
+    
+    if (!validWordCounts[words]) {
+        throw new Error('Invalid word count. Valid options are: 12, 15, 18, 21, 24.');
+    }
 
-    // Generate a mnemonic for the selected strength
-    const mnemonic = bip39.generateMnemonic(bits);
+    // Generate the mnemonic in the specified language and word count
+    const entropy = validWordCounts[words];
+    const mnemonic = bip39.generateMnemonic(entropy, null, languages[language]);
 
-    // Return the generated mnemonic
     return mnemonic;
 }
 
-// Export the function so it can be used in other files
-module.exports = generateMnemonic;
+// Export the function
+module.exports = { generateMnemonic };
