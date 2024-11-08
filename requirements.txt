@@ -1,4 +1,0 @@
-pycryptodome
-base58
-bip32utils
-mnemonic
