@@ -19,20 +19,24 @@ jobs:
       - name: Install NVM (Node Version Manager)
         run: |
           curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-          echo "source \$HOME/.nvm/nvm.sh" >> $GITHUB_ENV  # This makes nvm available in future steps
-          source $HOME/.nvm/nvm.sh  # Source nvm in this step
+          echo "NVM_DIR=\$HOME/.nvm" >> $GITHUB_ENV  # Set NVM_DIR to use in subsequent steps
+          echo "source \$NVM_DIR/nvm.sh" >> $GITHUB_ENV  # This will allow sourcing of nvm.sh in later steps
+
+      - name: Install Node.js using NVM
+        run: |
+          source $NVM_DIR/nvm.sh  # Source nvm.sh to use nvm
           nvm install 22  # Install Node.js version 22
-          nvm use 22  # Switch to Node.js version 22
+          nvm use 22  # Set the Node.js version to 22
           node -v  # Verify Node.js version
           npm -v   # Verify npm version
 
       - name: Install dependencies
         run: |
-          source $HOME/.nvm/nvm.sh  # Ensure nvm is sourced in this step
+          source $NVM_DIR/nvm.sh  # Ensure nvm is sourced in this step
           npm install  # Install required packages from package.json
 
       - name: Run main.js
         run: |
-          source $HOME/.nvm/nvm.sh  # Ensure nvm is sourced in this step
+          source $NVM_DIR/nvm.sh  # Ensure nvm is sourced in this step
           node main.js  # Run the main.js file
           
