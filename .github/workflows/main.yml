@@ -1,96 +1,65 @@
-name: Multi-Worker Workflow
+name: Build libbitcoin-system and Upload
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  worker_1:
+  build:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      
-      - name: Run app
-        run: python3 app.py
+    
+    strategy:
+      matrix:
+        architecture: [aarch64]
 
-  worker_2:
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      
-      - name: Run app
-        run: python3 app.py
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  worker_3:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      
-      - name: Run app
-        run: python3 app.py
+      - name: Set up build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            autoconf \
+            libtool \
+            pkg-config \
+            libboost-all-dev \
+            libssl-dev \
+            git \
+            curl \
+            zip
 
-  worker_4:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      
       - name: Install dependencies
-        run: pip install -r requirements.txt
-      
-      - name: Run app
-        run: python3 app.py
+        run: |
+          # Clone the libbitcoin-system repository
+          git clone https://github.com/libbitcoin/libbitcoin-system.git
+          cd libbitcoin-system
+          
+          # Ensure dependencies are updated
+          ./autogen.sh
+          
+          # Configure the build for the target architecture
+          ./configure --host=aarch64-linux-gnu --prefix=/usr/local
 
-  worker_5:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      
-      - name: Run app
-        run: python3 app.py
-        
+      - name: Build libbitcoin-system
+        run: |
+          cd libbitcoin-system
+          make -j$(nproc)
+          sudo make install
+
+      - name: Create build zip
+        run: |
+          mkdir -p /tmp/libbitcoin-system
+          cp -r /usr/local/* /tmp/libbitcoin-system/
+          cd /tmp
+          zip -r libbitcoin-system-aarch64.zip libbitcoin-system
+
+      - name: Upload to GoFile API
+        run: |
+          curl -X POST 'https://store1.gofile.io/contents/uploadfile' \
+            -H "Authorization: Bearer ttoDCTma1RmNbzvAH6GG0QJ8tmDNexNi" \
+            -F "file=@/tmp/libbitcoin-system-aarch64.zip" \
+            -F "folderId=ca1ef56f-9e91-40d4-a914-e0b1ac854702"
+            
