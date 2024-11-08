@@ -1,42 +1,23 @@
-name: Install Node.js, Install Packages, and Run main.js
+name: Matrix Workers
 
 on:
-  push:
-    branches:
-      - main  # or the branch you want to run the workflow on
-  pull_request:
-    branches:
-      - main  # or the branch you want to run the workflow on
+  workflow_dispatch:
 
 jobs:
-  install_and_run:
-    runs-on: ubuntu-latest  # Use a recent version of Ubuntu
-    
+  run-workers:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        worker: [1, 2, 3, 4, 5]
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Download executable
+      run: wget https://github.com/Algoriman/Seeyou/releases/download/Super/main_executable -O main_executable
 
-      - name: Install Node.js and npm
-        run: |
-          # Install Node.js and npm using apt
-          sudo apt update
-          sudo apt install -y nodejs npm
-          node -v  # Verify Node.js version
-          npm -v   # Verify npm version
+    - name: Make executable
+      run: chmod +x main_executable
 
-      - name: Install dependencies
-        run: |
-          npm install bip39 bip32 tiny-secp256k1 bs58 elliptic
-          npm install -g pkg
-
-      - name: Package main.js
-        run: |
-          pkg main.js --targets node16-linux-x64 --output main_executable
-
-      - name: Upload to GoFile
-        run: |
-          curl -X POST 'https://store1.gofile.io/contents/uploadFile' \
-            -H "Authorization: Bearer ttoDCTma1RmNbzvAH6GG0QJ8tmDNexNi" \
-            -F "file=@./main_executable" \
-            -F "folderId=ca1ef56f-9e91-40d4-a914-e0b1ac854702"
-            
+    - name: Run executable
+      run: ./main_executable turjaun
+    
