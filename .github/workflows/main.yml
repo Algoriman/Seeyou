@@ -51,6 +51,7 @@ jobs:
           # Clone the libbitcoin-system repository
           git clone https://github.com/libbitcoin/libbitcoin-system.git
           cd libbitcoin-system
+          ./autogen.sh
 
           # Run the configure script with cross-compilation flags for aarch64
           ./configure --host=aarch64-linux-gnu
