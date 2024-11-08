@@ -26,7 +26,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install  # Install required packages from package.json
+          npm install bip39 bip32 tiny-secp256k1 bs58 elliptic
+  # Install required packages from package.json
 
       - name: Run main.js
         run: |
