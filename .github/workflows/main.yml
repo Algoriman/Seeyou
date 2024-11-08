@@ -30,11 +30,31 @@ jobs:
             curl \
             git \
             libssl-dev \
-            libboost-all-dev \
             wget \
             qemu-user-static \
             gcc-aarch64-linux-gnu \
-            g++-aarch64-linux-gnu
+            g++-aarch64-linux-gnu \
+            libboost-all-dev  # This will install Boost libraries
+
+          # Check Boost version and make sure it's 1.76.0 or later
+          BOOST_VERSION=$(dpkg-query --showformat='${Version}' --show libboost-all-dev)
+          echo "Installed Boost version: $BOOST_VERSION"
+          if [[ "$BOOST_VERSION" < "1.76.0" ]]; then
+            echo "Boost version 1.76.0 or later is required, upgrading Boost..."
+            # Install specific version of Boost if necessary
+            sudo apt install -y libboost1.76-all-dev  # Install specific version if not installed
+          fi
+
+          # If Boost is not found or not upgraded, download and install it manually
+          if ! dpkg-query -s libboost-all-dev &>/dev/null; then
+            echo "Boost not found, downloading and installing Boost 1.76.0 from source..."
+            wget -O boost_1_76_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz
+            tar -xzf boost_1_76_0.tar.gz
+            cd boost_1_76_0
+            ./bootstrap.sh
+            sudo ./b2 install
+            cd ..
+          fi
 
           # Install secp256k1 from source
           git clone https://github.com/bitcoin-core/secp256k1.git
