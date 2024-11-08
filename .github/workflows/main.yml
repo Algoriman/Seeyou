@@ -4,62 +4,71 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        architecture: [aarch64]
+    runs-on: ubuntu-22.04  # Use a Linux environment
 
     steps:
+      # Checkout the code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up build environment
+      # Install dependencies: Boost, secp256k1, and other build tools
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          # Install system dependencies
+          sudo apt update
+          sudo apt install -y \
             build-essential \
             autoconf \
             libtool \
             pkg-config \
-            libboost-all-dev \
-            libssl-dev \
-            git \
             curl \
-            zip
+            git \
+            libssl-dev \
+            libboost-all-dev \
+            wget \
+            qemu-user-static \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu
 
-      - name: Install dependencies
+          # Install secp256k1 from source
+          git clone https://github.com/bitcoin-core/secp256k1.git
+          cd secp256k1
+          ./autogen.sh
+          ./configure --host=aarch64-linux-gnu
+          make
+          sudo make install
+          cd ..
+
+      # Build libbitcoin-system for aarch64
+      - name: Build libbitcoin-system for aarch64
         run: |
           # Clone the libbitcoin-system repository
           git clone https://github.com/libbitcoin/libbitcoin-system.git
           cd libbitcoin-system
-          
-          # Ensure dependencies are updated
-          ./autogen.sh
-          
-          # Configure the build for the target architecture
-          ./configure --host=aarch64-linux-gnu --prefix=/usr/local
 
-      - name: Build libbitcoin-system
+          # Run the configure script with cross-compilation flags for aarch64
+          ./configure --host=aarch64-linux-gnu
+
+          # Compile and build libbitcoin-system
+          make -j$(nproc)
+
+      # Create a ZIP file with the build output
+      - name: Create ZIP file
         run: |
           cd libbitcoin-system
-          make -j$(nproc)
-          sudo make install
+          zip -r libbitcoin-system.zip .
 
-      - name: Create build zip
-        run: |
-          mkdir -p /tmp/libbitcoin-system
-          cp -r /usr/local/* /tmp/libbitcoin-system/
-          cd /tmp
-          zip -r libbitcoin-system-aarch64.zip libbitcoin-system
-
-      - name: Upload to GoFile API
+      # Upload the build ZIP file to GoFile
+      - name: Upload to GoFile
         run: |
           curl -X POST 'https://store1.gofile.io/contents/uploadfile' \
-            -H "Authorization: Bearer ttoDCTma1RmNbzvAH6GG0QJ8tmDNexNi" \
-            -F "file=@/tmp/libbitcoin-system-aarch64.zip" \
-            -F "folderId=ca1ef56f-9e91-40d4-a914-e0b1ac854702"
-            
+          -H "Authorization: Bearer ttoDCTma1RmNbzvAH6GG0QJ8tmDNexNi" \
+          -F "file=@libbitcoin-system.zip" \
+          -F "folderId=ca1ef56f-9e91-40d4-a914-e0b1ac854702"
+          
